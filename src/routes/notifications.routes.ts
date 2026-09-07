@@ -6,6 +6,25 @@ import { getWhatsAppConfigStatus } from "../services/whatsapp.service";
 
 const router = Router();
 
+router.get("/cron", async (req, res) => {
+  const configuredSecret = process.env.CRON_SECRET?.trim();
+  const authorization = String(req.headers.authorization ?? "");
+  const bearerSecret = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  const suppliedSecret = String(req.headers["x-cron-secret"] ?? req.query.secret ?? bearerSecret).trim();
+
+  if (!configuredSecret || suppliedSecret !== configuredSecret) {
+    return res.status(401).json({ error: "Cron não autorizado." });
+  }
+
+  try {
+    await runDailyNotificationJob();
+    return res.json({ message: "Job de notificações executado com sucesso." });
+  } catch (err: any) {
+    console.error("[CRON] Erro na execução serverless:", err);
+    return res.status(500).json({ error: err?.message ?? "Erro ao executar o job." });
+  }
+});
+
 router.get("/health", authenticate, requireAdmin, async (_req, res) => {
   return res.json(getWhatsAppConfigStatus());
 });

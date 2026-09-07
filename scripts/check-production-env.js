@@ -6,6 +6,7 @@ const required = [
   "WHATSAPP_API_URL",
   "WHATSAPP_INSTANCE",
   "WHATSAPP_API_KEY",
+  "CRON_SECRET",
 ];
 
 const missing = required.filter((key) => !process.env[key]?.trim());

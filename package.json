@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "npm run check:env && node dist/server.js",
     "check:env": "node scripts/check-production-env.js",
+    "vercel-build": "npm run build",
     "seed:admin": "ts-node --transpile-only src/scripts/seed-admin.ts"
   },
   "dependencies": {

@@ -45,7 +45,10 @@ app.use((err, _req, res, _next) => {
     console.error(err);
     res.status(err?.status ?? 500).json({ error: err?.message ?? "Erro interno do servidor." });
 });
-app.listen(PORT, () => {
-    console.log(`[NetFácil API] a correr em http://localhost:${PORT}`);
-    (0, notification_cron_1.scheduleNotificationJob)();
-});
+if (process.env.VERCEL !== "1") {
+    app.listen(PORT, () => {
+        console.log(`[NetFácil API] a correr em http://localhost:${PORT}`);
+        (0, notification_cron_1.scheduleNotificationJob)();
+    });
+}
+exports.default = app;

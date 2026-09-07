@@ -6,6 +6,23 @@ const auth_1 = require("../middleware/auth");
 const notification_cron_1 = require("../jobs/notification.cron");
 const whatsapp_service_1 = require("../services/whatsapp.service");
 const router = (0, express_1.Router)();
+router.get("/cron", async (req, res) => {
+    const configuredSecret = process.env.CRON_SECRET?.trim();
+    const authorization = String(req.headers.authorization ?? "");
+    const bearerSecret = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+    const suppliedSecret = String(req.headers["x-cron-secret"] ?? req.query.secret ?? bearerSecret).trim();
+    if (!configuredSecret || suppliedSecret !== configuredSecret) {
+        return res.status(401).json({ error: "Cron não autorizado." });
+    }
+    try {
+        await (0, notification_cron_1.runDailyNotificationJob)();
+        return res.json({ message: "Job de notificações executado com sucesso." });
+    }
+    catch (err) {
+        console.error("[CRON] Erro na execução serverless:", err);
+        return res.status(500).json({ error: err?.message ?? "Erro ao executar o job." });
+    }
+});
 router.get("/health", auth_1.authenticate, auth_1.requireAdmin, async (_req, res) => {
     return res.json((0, whatsapp_service_1.getWhatsAppConfigStatus)());
 });
