@@ -2,8 +2,13 @@ import { Router } from "express";
 import { query } from "../config/db";
 import { authenticate, requireAdmin } from "../middleware/auth";
 import { runDailyNotificationJob } from "../jobs/notification.cron";
+import { getWhatsAppConfigStatus } from "../services/whatsapp.service";
 
 const router = Router();
+
+router.get("/health", authenticate, requireAdmin, async (_req, res) => {
+  return res.json(getWhatsAppConfigStatus());
+});
 
 // GET /notifications/logs — histórico de envios (admin)
 router.get("/logs", authenticate, requireAdmin, async (req, res) => {

@@ -5,6 +5,11 @@ const WHATSAPP_INSTANCE = process.env.WHATSAPP_INSTANCE as string;     // ex: hu
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY as string;       // NUNCA hardcode em produção — usar variável de ambiente
 const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE as string;        // número do admin, formato 2449XXXXXXXX
 
+function normalizePhone(number: string): string {
+  const digits = number.replace(/\D/g, "");
+  return digits.length === 9 ? `244${digits}` : digits;
+}
+
 interface SendResult {
   success: boolean;
   payload?: any;
@@ -17,16 +22,26 @@ interface SendResult {
  * job continue a processar os restantes clientes mesmo se um envio falhar.
  */
 export async function sendWhatsAppMessage(number: string, text: string): Promise<SendResult> {
-  const url = `${WHATSAPP_BASE_URL}/message/sendText/${WHATSAPP_INSTANCE}`;
+  const baseUrl = WHATSAPP_BASE_URL?.trim();
+  const instance = WHATSAPP_INSTANCE?.trim();
+  const apiKey = WHATSAPP_API_KEY?.trim();
+  const recipient = normalizePhone(number);
+
+  if (!baseUrl || !instance || !apiKey) {
+    return { success: false, error: "API WhatsApp não configurada no ambiente." };
+  }
+
+  const url = `${baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(instance)}`;
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: WHATSAPP_API_KEY,
+        apikey: apiKey,
       },
-      body: JSON.stringify({ number, text }),
+      body: JSON.stringify({ number: recipient, text }),
+      signal: AbortSignal.timeout(Number(process.env.WHATSAPP_TIMEOUT_MS ?? 15000)),
     });
 
     const payload = await response.json().catch(() => null);
@@ -96,8 +111,16 @@ export function getAdminPhone(): string {
   return ADMIN_PHONE;
 }
 
+export function getWhatsAppConfigStatus() {
+  return {
+    configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && WHATSAPP_API_KEY?.trim()),
+    baseUrl: WHATSAPP_BASE_URL?.trim() || null,
+    instanceConfigured: Boolean(WHATSAPP_INSTANCE?.trim()),
+  };
+}
+
 export function getClientPortalUrl(): string {
-  return process.env.CLIENT_PORTAL_URL ?? "http://localhost:3000/login";
+  return "/login";
 }
 
 export async function getConfiguredNotificationNumbers(key: string): Promise<string[]> {

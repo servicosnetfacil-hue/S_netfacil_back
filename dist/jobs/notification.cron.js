@@ -118,7 +118,7 @@ async function runDailyNotificationJob() {
     console.log(`[CRON] Concluído — 7d:${(await getSubscriptionsExpiringIn(7)).length} envios processados, ` +
         `1d:${expiringTomorrow.length}, expirados hoje:${expiredToday.length}`);
 }
-/** Regista o cron para correr todos os dias às 08:00 (hora de Luanda). */
+/** Regista o cron diário no fuso configurado para o ambiente. */
 function scheduleNotificationJob() {
     node_cron_1.default.schedule("0 8 * * *", () => {
         runDailyNotificationJob().catch((err) => console.error("[CRON] Erro na execução do job de notificações:", err));

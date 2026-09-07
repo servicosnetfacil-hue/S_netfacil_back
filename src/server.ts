@@ -11,15 +11,27 @@ import financeRoutes from "./routes/finance.routes";
 import notificationsRoutes from "./routes/notifications.routes";
 import webhooksRoutes from "./routes/webhooks.routes";
 import { scheduleNotificationJob } from "./jobs/notification.cron";
+import { pool } from "./config/db";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 
+// A API é consumida por frontend local, LAN e hospedado.
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.get("/health/db", async (_req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    return res.json({ status: "ok", database: "connected" });
+  } catch (err) {
+    console.error("[Health] Falha na base de dados:", err);
+    return res.status(503).json({ status: "error", database: "unavailable" });
+  }
+});
 
 app.use("/auth", authRoutes);
 app.use("/clients", clientsRoutes);

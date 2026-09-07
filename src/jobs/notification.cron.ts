@@ -152,7 +152,7 @@ async function runDailyNotificationJob() {
   );
 }
 
-/** Regista o cron para correr todos os dias às 08:00 (hora de Luanda). */
+/** Regista o cron diário no fuso configurado para o ambiente. */
 export function scheduleNotificationJob() {
   cron.schedule("0 8 * * *", () => {
     runDailyNotificationJob().catch((err) =>

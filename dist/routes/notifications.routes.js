@@ -4,7 +4,11 @@ const express_1 = require("express");
 const db_1 = require("../config/db");
 const auth_1 = require("../middleware/auth");
 const notification_cron_1 = require("../jobs/notification.cron");
+const whatsapp_service_1 = require("../services/whatsapp.service");
 const router = (0, express_1.Router)();
+router.get("/health", auth_1.authenticate, auth_1.requireAdmin, async (_req, res) => {
+    return res.json((0, whatsapp_service_1.getWhatsAppConfigStatus)());
+});
 // GET /notifications/logs — histórico de envios (admin)
 router.get("/logs", auth_1.authenticate, auth_1.requireAdmin, async (req, res) => {
     const { type, channel } = req.query;

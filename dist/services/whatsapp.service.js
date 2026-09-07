@@ -4,6 +4,7 @@ exports.messageTemplates = void 0;
 exports.sendWhatsAppMessage = sendWhatsAppMessage;
 exports.sendAndLogNotification = sendAndLogNotification;
 exports.getAdminPhone = getAdminPhone;
+exports.getWhatsAppConfigStatus = getWhatsAppConfigStatus;
 exports.getClientPortalUrl = getClientPortalUrl;
 exports.getConfiguredNotificationNumbers = getConfiguredNotificationNumbers;
 exports.formatPhoneDisplay = formatPhoneDisplay;
@@ -12,21 +13,33 @@ const WHATSAPP_BASE_URL = process.env.WHATSAPP_API_URL; // ex: https://whatsapp-
 const WHATSAPP_INSTANCE = process.env.WHATSAPP_INSTANCE; // ex: hunter-5915bd6e0ff30b99dc4558dc6e3b17b4
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY; // NUNCA hardcode em produção — usar variável de ambiente
 const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE; // número do admin, formato 2449XXXXXXXX
+function normalizePhone(number) {
+    const digits = number.replace(/\D/g, "");
+    return digits.length === 9 ? `244${digits}` : digits;
+}
 /**
  * Envia uma mensagem de texto via WhatsApp usando a API configurada.
  * Não lança exceção — devolve { success:false, error } para que o cron
  * job continue a processar os restantes clientes mesmo se um envio falhar.
  */
 async function sendWhatsAppMessage(number, text) {
-    const url = `${WHATSAPP_BASE_URL}/message/sendText/${WHATSAPP_INSTANCE}`;
+    const baseUrl = WHATSAPP_BASE_URL?.trim();
+    const instance = WHATSAPP_INSTANCE?.trim();
+    const apiKey = WHATSAPP_API_KEY?.trim();
+    const recipient = normalizePhone(number);
+    if (!baseUrl || !instance || !apiKey) {
+        return { success: false, error: "API WhatsApp não configurada no ambiente." };
+    }
+    const url = `${baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(instance)}`;
     try {
         const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                apikey: WHATSAPP_API_KEY,
+                apikey: apiKey,
             },
-            body: JSON.stringify({ number, text }),
+            body: JSON.stringify({ number: recipient, text }),
+            signal: AbortSignal.timeout(Number(process.env.WHATSAPP_TIMEOUT_MS ?? 15000)),
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
@@ -68,8 +81,15 @@ async function sendAndLogNotification(params) {
 function getAdminPhone() {
     return ADMIN_PHONE;
 }
+function getWhatsAppConfigStatus() {
+    return {
+        configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && WHATSAPP_API_KEY?.trim()),
+        baseUrl: WHATSAPP_BASE_URL?.trim() || null,
+        instanceConfigured: Boolean(WHATSAPP_INSTANCE?.trim()),
+    };
+}
 function getClientPortalUrl() {
-    return process.env.CLIENT_PORTAL_URL ?? "http://localhost:3000/login";
+    return "/login";
 }
 async function getConfiguredNotificationNumbers(key) {
     const [setting] = await (0, db_1.query)(`SELECT value FROM company_settings WHERE key = $1`, [key]);
