@@ -38,6 +38,7 @@ app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+app.get("/", (_req, res) => res.json({ service: "NetFácil API", status: "ok" }));
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.get("/health/db", async (_req, res) => {

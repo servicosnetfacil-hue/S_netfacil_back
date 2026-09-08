@@ -184,7 +184,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
       formattedAmount,
       formattedExpiry
     );
-    sendAndLogNotification({
+    await sendAndLogNotification({
       userId: user.id,
       subscriptionId: finalSubId,
       channel: "client",
@@ -204,7 +204,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
         extractedTransId ?? "N/A",
         formattedExpiry
       );
-      sendAndLogNotification({
+      await sendAndLogNotification({
         userId: null,
         subscriptionId: finalSubId,
         channel: "admin",
@@ -216,7 +216,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
   } else if (status === "rejected" && rejectionReason) {
     // Se foi REJEITADO AUTOMATICAMENTE, envia WhatsApp ao cliente
     const clientMsg = messageTemplates.paymentRejectedClient(user.full_name, rejectionReason);
-    sendAndLogNotification({
+    await sendAndLogNotification({
       userId: user.id,
       subscriptionId: finalSubId,
       channel: "client",
@@ -256,7 +256,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
     const activationNumbers = await getConfiguredNotificationNumbers("internet_activation_numbers");
     const activationMessage = `ACTIVAR INTERNET: ${user.full_name} (${user.phone}) pagou o plano ${matchedPlan.name}. Transação: ${extractedTransId ?? "N/A"}.`;
     for (const number of activationNumbers) {
-      sendAndLogNotification({
+      await sendAndLogNotification({
         userId: user.id,
         subscriptionId: finalSubId,
         channel: "admin",
@@ -278,7 +278,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
       accountSuspended = true;
       rejectedAttempts = attempts;
       const suspensionMessage = messageTemplates.accountSuspendedClient(user.full_name);
-      sendAndLogNotification({
+      await sendAndLogNotification({
         userId: user.id,
         subscriptionId: finalSubId,
         channel: "client",
@@ -430,7 +430,7 @@ router.patch("/:id/approve", authenticate, requireAdmin, async (req: Authenticat
     formattedAmount,
     formattedExpiry
   );
-  sendAndLogNotification({
+  await sendAndLogNotification({
     userId: payment.user_id,
     subscriptionId,
     channel: "client",
@@ -442,7 +442,7 @@ router.patch("/:id/approve", authenticate, requireAdmin, async (req: Authenticat
   const activationNumbers = await getConfiguredNotificationNumbers("internet_activation_numbers");
   const activationMessage = `ACTIVAR INTERNET: ${payment.full_name} (${payment.phone}) pagou o plano ${payment.plan_name}.`;
   for (const number of activationNumbers) {
-    sendAndLogNotification({
+    await sendAndLogNotification({
       userId: payment.user_id,
       subscriptionId,
       channel: "admin",
@@ -475,7 +475,7 @@ router.patch("/:id/reject", authenticate, requireAdmin, async (req: Authenticate
 
   if (payment) {
     const clientMsg = messageTemplates.paymentRejectedClient(payment.full_name, reason);
-    sendAndLogNotification({
+    await sendAndLogNotification({
       userId: payment.user_id,
       subscriptionId: payment.subscription_id,
       channel: "client",
@@ -491,7 +491,7 @@ router.patch("/:id/reject", authenticate, requireAdmin, async (req: Authenticate
     );
     if (Number(attemptRow?.rejected_proof_attempts ?? 0) >= 3) {
       await query(`UPDATE users SET is_active = false WHERE id = $1`, [payment.user_id]);
-      sendAndLogNotification({
+      await sendAndLogNotification({
         userId: payment.user_id,
         subscriptionId: payment.subscription_id,
         channel: "client",

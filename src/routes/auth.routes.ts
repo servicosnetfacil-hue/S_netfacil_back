@@ -92,7 +92,7 @@ router.post("/register", async (req, res) => {
   // Envia notificação WhatsApp automática com as credenciais e link de acesso
   const portalUrl = getClientPortalUrl();
   const message = messageTemplates.welcomeClient(fullName, phone, password, portalUrl);
-  sendAndLogNotification({
+  await sendAndLogNotification({
     userId: user.id,
     subscriptionId: sub ? sub.id : null,
     channel: "client",

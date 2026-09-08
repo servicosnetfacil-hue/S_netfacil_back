@@ -83,6 +83,10 @@ export async function sendAndLogNotification(params: {
 
   const result = await sendWhatsAppMessage(params.phone, params.message);
 
+  if (!result.success) {
+    console.error(`[WhatsApp] Falha no envio para ${formatPhoneDisplay(params.phone)}: ${result.error ?? "resposta inválida do provedor"}`);
+  }
+
   try {
     await query(
       `INSERT INTO notification_logs
