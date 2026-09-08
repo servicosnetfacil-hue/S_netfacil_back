@@ -7,13 +7,22 @@ const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE as string;        // númer
 
 function normalizePhone(number: string): string {
   const digits = number.replace(/\D/g, "");
-  return digits.length === 9 ? `244${digits}` : digits;
+  if (digits.length === 9) return `244${digits}`;
+  if (digits.length === 12 && digits.startsWith("244")) return digits;
+  return "";
 }
 
 interface SendResult {
   success: boolean;
   payload?: any;
   error?: string;
+}
+
+function getProviderError(payload: any, status: number): string {
+  const message = payload?.message ?? payload?.error ?? payload?.response?.message;
+  if (Array.isArray(message)) return `HTTP ${status}: ${message.join(", ")}`;
+  if (message) return `HTTP ${status}: ${String(message)}`;
+  return `HTTP ${status}`;
 }
 
 /**
@@ -29,6 +38,9 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
 
   if (!baseUrl || !instance || !apiKey) {
     return { success: false, error: "API WhatsApp não configurada no ambiente." };
+  }
+  if (!recipient) {
+    return { success: false, error: `Número WhatsApp inválido: ${number}` };
   }
 
   const url = `${baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(instance)}`;
@@ -47,7 +59,7 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      return { success: false, payload, error: `HTTP ${response.status}` };
+      return { success: false, payload, error: getProviderError(payload, response.status) };
     }
     return { success: true, payload };
   } catch (err: any) {
@@ -116,10 +128,14 @@ export function getAdminPhone(): string {
 }
 
 export function getWhatsAppConfigStatus() {
+  const apiKey = WHATSAPP_API_KEY?.trim() ?? "";
   return {
-    configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && WHATSAPP_API_KEY?.trim()),
+    configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && apiKey),
     baseUrl: WHATSAPP_BASE_URL?.trim() || null,
     instanceConfigured: Boolean(WHATSAPP_INSTANCE?.trim()),
+    instance: WHATSAPP_INSTANCE?.trim() || null,
+    apiKeyFingerprint: apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
+    adminPhone: formatPhoneDisplay(ADMIN_PHONE),
   };
 }
 
