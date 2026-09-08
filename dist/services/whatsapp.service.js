@@ -15,7 +15,19 @@ const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY; // NUNCA hardcode em prod
 const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE; // número do admin, formato 2449XXXXXXXX
 function normalizePhone(number) {
     const digits = number.replace(/\D/g, "");
-    return digits.length === 9 ? `244${digits}` : digits;
+    if (digits.length === 9)
+        return `244${digits}`;
+    if (digits.length === 12 && digits.startsWith("244"))
+        return digits;
+    return "";
+}
+function getProviderError(payload, status) {
+    const message = payload?.message ?? payload?.error ?? payload?.response?.message;
+    if (Array.isArray(message))
+        return `HTTP ${status}: ${message.join(", ")}`;
+    if (message)
+        return `HTTP ${status}: ${String(message)}`;
+    return `HTTP ${status}`;
 }
 /**
  * Envia uma mensagem de texto via WhatsApp usando a API configurada.
@@ -30,6 +42,9 @@ async function sendWhatsAppMessage(number, text) {
     if (!baseUrl || !instance || !apiKey) {
         return { success: false, error: "API WhatsApp não configurada no ambiente." };
     }
+    if (!recipient) {
+        return { success: false, error: `Número WhatsApp inválido: ${number}` };
+    }
     const url = `${baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(instance)}`;
     try {
         const response = await fetch(url, {
@@ -43,7 +58,7 @@ async function sendWhatsAppMessage(number, text) {
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
-            return { success: false, payload, error: `HTTP ${response.status}` };
+            return { success: false, payload, error: getProviderError(payload, response.status) };
         }
         return { success: true, payload };
     }
@@ -58,6 +73,9 @@ async function sendWhatsAppMessage(number, text) {
  */
 async function sendAndLogNotification(params) {
     const result = await sendWhatsAppMessage(params.phone, params.message);
+    if (!result.success) {
+        console.error(`[WhatsApp] Falha no envio para ${formatPhoneDisplay(params.phone)}: ${result.error ?? "resposta inválida do provedor"}`);
+    }
     try {
         await (0, db_1.query)(`INSERT INTO notification_logs
          (user_id, subscription_id, channel, type, phone, message, success, response_payload)
@@ -82,10 +100,14 @@ function getAdminPhone() {
     return ADMIN_PHONE;
 }
 function getWhatsAppConfigStatus() {
+    const apiKey = WHATSAPP_API_KEY?.trim() ?? "";
     return {
-        configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && WHATSAPP_API_KEY?.trim()),
+        configured: Boolean(WHATSAPP_BASE_URL?.trim() && WHATSAPP_INSTANCE?.trim() && apiKey),
         baseUrl: WHATSAPP_BASE_URL?.trim() || null,
         instanceConfigured: Boolean(WHATSAPP_INSTANCE?.trim()),
+        instance: WHATSAPP_INSTANCE?.trim() || null,
+        apiKeyFingerprint: apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
+        adminPhone: formatPhoneDisplay(ADMIN_PHONE),
     };
 }
 function getClientPortalUrl() {

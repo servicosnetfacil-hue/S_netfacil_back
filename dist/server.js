@@ -18,10 +18,26 @@ const notification_cron_1 = require("./jobs/notification.cron");
 const db_1 = require("./config/db");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT ?? 4000;
-// A API é consumida por frontend local, LAN e hospedado.
-app.use((0, cors_1.default)());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://127.0.0.1:3000,https://netfacil.carga.ao,https://www.netfacil.carga.ao")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+            return callback(null, true);
+        }
+        return callback(new Error("Origem não autorizada pelo CORS."));
+    },
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Cron-Secret"],
+    optionsSuccessStatus: 204,
+};
+app.use((0, cors_1.default)(corsOptions));
+app.options("*", (0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use("/uploads", express_1.default.static(path_1.default.join(process.cwd(), "uploads")));
+app.get("/", (_req, res) => res.json({ service: "NetFácil API", status: "ok" }));
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.get("/health/db", async (_req, res) => {
     try {

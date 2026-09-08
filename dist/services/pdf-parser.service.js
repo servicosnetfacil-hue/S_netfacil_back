@@ -5,14 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parsePaymentProofPdf = parsePaymentProofPdf;
 const fs_1 = __importDefault(require("fs"));
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PDFParse } = require("pdf-parse");
 /**
  * Extrai os dados do comprovativo em formato PDF (Express / Transferência bancária).
  * Procura por Montante, Transacção, Referência e Entidade no texto do PDF a partir do Buffer ou ficheiro.
  */
 async function parsePaymentProofPdf(dataInput) {
     try {
+        // O parser só é carregado quando há upload; evita falhas no arranque serverless.
+        const { PDFParse } = require("pdf-parse");
         const dataBuffer = typeof dataInput === "string" ? fs_1.default.readFileSync(dataInput) : dataInput;
         const parser = new PDFParse({ data: dataBuffer });
         const pdfData = await parser.getText();

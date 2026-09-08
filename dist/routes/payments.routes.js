@@ -140,7 +140,7 @@ router.post("/", auth_1.authenticate, upload.single("proof"), async (req, res) =
             const formattedAmount = (extractedAmount ?? matchedPlan.price_aoa).toLocaleString("pt-AO");
             // Enviar WhatsApp ao Cliente
             const clientMsg = whatsapp_service_1.messageTemplates.paymentApprovedClient(user.full_name, matchedPlan.name, formattedAmount, formattedExpiry);
-            (0, whatsapp_service_1.sendAndLogNotification)({
+            await (0, whatsapp_service_1.sendAndLogNotification)({
                 userId: user.id,
                 subscriptionId: finalSubId,
                 channel: "client",
@@ -152,7 +152,7 @@ router.post("/", auth_1.authenticate, upload.single("proof"), async (req, res) =
             const adminPhone = (0, whatsapp_service_1.getAdminPhone)();
             if (adminPhone) {
                 const adminMsg = whatsapp_service_1.messageTemplates.paymentApprovedAdmin(user.full_name, user.phone, matchedPlan.name, formattedAmount, extractedTransId ?? "N/A", formattedExpiry);
-                (0, whatsapp_service_1.sendAndLogNotification)({
+                await (0, whatsapp_service_1.sendAndLogNotification)({
                     userId: null,
                     subscriptionId: finalSubId,
                     channel: "admin",
@@ -165,7 +165,7 @@ router.post("/", auth_1.authenticate, upload.single("proof"), async (req, res) =
         else if (status === "rejected" && rejectionReason) {
             // Se foi REJEITADO AUTOMATICAMENTE, envia WhatsApp ao cliente
             const clientMsg = whatsapp_service_1.messageTemplates.paymentRejectedClient(user.full_name, rejectionReason);
-            (0, whatsapp_service_1.sendAndLogNotification)({
+            await (0, whatsapp_service_1.sendAndLogNotification)({
                 userId: user.id,
                 subscriptionId: finalSubId,
                 channel: "client",
@@ -199,7 +199,7 @@ router.post("/", auth_1.authenticate, upload.single("proof"), async (req, res) =
             const activationNumbers = await (0, whatsapp_service_1.getConfiguredNotificationNumbers)("internet_activation_numbers");
             const activationMessage = `ACTIVAR INTERNET: ${user.full_name} (${user.phone}) pagou o plano ${matchedPlan.name}. Transação: ${extractedTransId ?? "N/A"}.`;
             for (const number of activationNumbers) {
-                (0, whatsapp_service_1.sendAndLogNotification)({
+                await (0, whatsapp_service_1.sendAndLogNotification)({
                     userId: user.id,
                     subscriptionId: finalSubId,
                     channel: "admin",
@@ -219,7 +219,7 @@ router.post("/", auth_1.authenticate, upload.single("proof"), async (req, res) =
                 accountSuspended = true;
                 rejectedAttempts = attempts;
                 const suspensionMessage = whatsapp_service_1.messageTemplates.accountSuspendedClient(user.full_name);
-                (0, whatsapp_service_1.sendAndLogNotification)({
+                await (0, whatsapp_service_1.sendAndLogNotification)({
                     userId: user.id,
                     subscriptionId: finalSubId,
                     channel: "client",
@@ -328,7 +328,7 @@ router.patch("/:id/approve", auth_1.authenticate, auth_1.requireAdmin, async (re
     const formattedAmount = Number(payment.amount_aoa).toLocaleString("pt-AO");
     // Notificar cliente via WhatsApp
     const clientMsg = whatsapp_service_1.messageTemplates.paymentApprovedClient(payment.full_name, payment.plan_name, formattedAmount, formattedExpiry);
-    (0, whatsapp_service_1.sendAndLogNotification)({
+    await (0, whatsapp_service_1.sendAndLogNotification)({
         userId: payment.user_id,
         subscriptionId,
         channel: "client",
@@ -339,7 +339,7 @@ router.patch("/:id/approve", auth_1.authenticate, auth_1.requireAdmin, async (re
     const activationNumbers = await (0, whatsapp_service_1.getConfiguredNotificationNumbers)("internet_activation_numbers");
     const activationMessage = `ACTIVAR INTERNET: ${payment.full_name} (${payment.phone}) pagou o plano ${payment.plan_name}.`;
     for (const number of activationNumbers) {
-        (0, whatsapp_service_1.sendAndLogNotification)({
+        await (0, whatsapp_service_1.sendAndLogNotification)({
             userId: payment.user_id,
             subscriptionId,
             channel: "admin",
@@ -363,7 +363,7 @@ router.patch("/:id/reject", auth_1.authenticate, auth_1.requireAdmin, async (req
         return res.status(404).json({ error: "Pagamento não encontrado ou já processado." });
     if (payment) {
         const clientMsg = whatsapp_service_1.messageTemplates.paymentRejectedClient(payment.full_name, reason);
-        (0, whatsapp_service_1.sendAndLogNotification)({
+        await (0, whatsapp_service_1.sendAndLogNotification)({
             userId: payment.user_id,
             subscriptionId: payment.subscription_id,
             channel: "client",
@@ -375,7 +375,7 @@ router.patch("/:id/reject", auth_1.authenticate, auth_1.requireAdmin, async (req
        WHERE id = $1 RETURNING rejected_proof_attempts`, [payment.user_id]);
         if (Number(attemptRow?.rejected_proof_attempts ?? 0) >= 3) {
             await (0, db_1.query)(`UPDATE users SET is_active = false WHERE id = $1`, [payment.user_id]);
-            (0, whatsapp_service_1.sendAndLogNotification)({
+            await (0, whatsapp_service_1.sendAndLogNotification)({
                 userId: payment.user_id,
                 subscriptionId: payment.subscription_id,
                 channel: "client",

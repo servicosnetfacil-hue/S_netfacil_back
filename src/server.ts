@@ -16,7 +16,7 @@ import { pool } from "./config/db";
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 
-const allowedOrigins = (process.env.CORS_ORIGINS ?? "https://netfacil.carga.ao,https://www.netfacil.carga.ao")
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://127.0.0.1:3000,https://netfacil.carga.ao,https://www.netfacil.carga.ao")
   .split(",")
   .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
