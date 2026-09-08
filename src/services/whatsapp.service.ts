@@ -45,6 +45,20 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
 
   const url = `${baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(instance)}`;
 
+  // Captura a URL do Fixie disponibilizada pela Vercel Integration
+  const fixieUrl = process.env.FIXIE_URL;
+  let agent: any = undefined;
+
+  // Carregamento dinâmico assíncrono para evitar erro de compatibilidade ESM/CommonJS
+  if (fixieUrl) {
+    try {
+      const { HttpsProxyAgent } = await import("https-proxy-agent");
+      agent = new HttpsProxyAgent(fixieUrl);
+    } catch (err) {
+      console.error("[WhatsApp] Erro ao carregar HttpsProxyAgent:", err);
+    }
+  }
+
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -57,8 +71,10 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
       },
       body: JSON.stringify({ number: recipient, text }),
+      // Aplica o proxy para que a requisição saia pelo IP Fixo do Fixie
+      ...(agent && { agent }),
       signal: AbortSignal.timeout(Number(process.env.WHATSAPP_TIMEOUT_MS ?? 15000)),
-    });
+    } as any);
 
     const responseBody = await response.text();
     let payload: any = null;
