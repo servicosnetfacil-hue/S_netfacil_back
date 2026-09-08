@@ -1,6 +1,4 @@
 import fs from "fs";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PDFParse } = require("pdf-parse");
 
 export interface ExtractedProofData {
   amount: number | null;
@@ -16,6 +14,8 @@ export interface ExtractedProofData {
  */
 export async function parsePaymentProofPdf(dataInput: Buffer | string): Promise<ExtractedProofData> {
   try {
+    // O parser só é carregado quando há upload; evita falhas no arranque serverless.
+    const { PDFParse } = require("pdf-parse");
     const dataBuffer = typeof dataInput === "string" ? fs.readFileSync(dataInput) : dataInput;
     const parser = new PDFParse({ data: dataBuffer });
     const pdfData = await parser.getText();

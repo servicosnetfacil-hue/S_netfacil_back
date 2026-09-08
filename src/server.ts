@@ -16,8 +16,25 @@ import { pool } from "./config/db";
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 
-// A API é consumida por frontend local, LAN e hospedado.
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "https://netfacil.carga.ao,https://www.netfacil.carga.ao")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+    if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+      return callback(null, true);
+    }
+    return callback(new Error("Origem não autorizada pelo CORS."));
+  },
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Cron-Secret"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
