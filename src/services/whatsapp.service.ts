@@ -18,11 +18,11 @@ interface SendResult {
   error?: string;
 }
 
-function getProviderError(payload: any, status: number): string {
+function getProviderError(payload: any, status: number, statusText: string, responseBody: string): string {
   const message = payload?.message ?? payload?.error ?? payload?.response?.message;
   if (Array.isArray(message)) return `HTTP ${status}: ${message.join(", ")}`;
   if (message) return `HTTP ${status}: ${String(message)}`;
-  return `HTTP ${status}`;
+  return `HTTP ${status}${statusText ? ` ${statusText}` : ""}${responseBody ? `: ${responseBody.slice(0, 500)}` : ""}`;
 }
 
 /**
@@ -56,13 +56,31 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
       signal: AbortSignal.timeout(Number(process.env.WHATSAPP_TIMEOUT_MS ?? 15000)),
     });
 
-    const payload = await response.json().catch(() => null);
+    const responseBody = await response.text();
+    let payload: any = null;
+    try {
+      payload = responseBody ? JSON.parse(responseBody) : null;
+    } catch {
+      // A resposta não JSON continua disponível no erro e nos logs.
+    }
 
     if (!response.ok) {
-      return { success: false, payload, error: getProviderError(payload, response.status) };
+      const error = getProviderError(payload, response.status, response.statusText, responseBody);
+      console.error("[WhatsApp] Resposta da Evolution API:", {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseBody.slice(0, 1000),
+        url,
+      });
+      return { success: false, payload, error };
     }
     return { success: true, payload };
   } catch (err: any) {
+    console.error("[WhatsApp] Excepção ao chamar a Evolution API:", {
+      name: err?.name,
+      message: err?.message,
+      url,
+    });
     return { success: false, error: err?.message ?? "Erro desconhecido ao enviar WhatsApp" };
   }
 }
