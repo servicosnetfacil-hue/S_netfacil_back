@@ -50,7 +50,11 @@ export async function sendWhatsAppMessage(number: string, text: string): Promise
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: apiKey,
+        "apikey": apiKey,
+        // Cabeçalhos para simular navegação real e evitar bloqueio básico de WAF/Cloudflare na Vercel
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
       },
       body: JSON.stringify({ number: recipient, text }),
       signal: AbortSignal.timeout(Number(process.env.WHATSAPP_TIMEOUT_MS ?? 15000)),
@@ -109,7 +113,6 @@ export async function sendAndLogNotification(params: {
   phone: string;
   message: string;
 }): Promise<SendResult> {
-
 
   const result = await sendWhatsAppMessage(params.phone, params.message);
 
@@ -195,7 +198,6 @@ export const messageTemplates = {
     `🌐 *Aceda ao Portal do Cliente aqui:*\n${portalUrl}\n\n` +
     `Guarde estes dados em segurança. Se precisar de ajuda, entre em contacto connosco!`,
 
-
   reminder7d: (name: string, planName: string, expiresAt: string) =>
     `Olá ${name}! 👋 O seu plano *${planName}* na NetFácil vence em 7 dias (${expiresAt}).\n\n` +
     `⚠️ *AVISO IMPORTANTE:* Ao efetuar a renovação, certifique-se de transferir para as coordenadas oficiais corretas e pagar o VALOR EXATO correspondente ao seu plano. Caso contrário, o seu pagamento será considerado *INVÁLIDO* pelo sistema e poderá ocorrer em perda de valores.`,
@@ -212,7 +214,6 @@ export const messageTemplates = {
   expiredClient: (name: string) =>
     `🔴 ${name}, o seu plano expirou hoje. O sinal será suspenso até efetuar o pagamento.\n\n` +
     `⚠️ *Aviso de Pagamento:* Ao efetuar a transferência, certifique-se de usar as coordenadas oficiais corretas e pagar o VALOR EXATO do seu plano para garantir a validação sem perda de valores.`,
-
 
   adminSummary1d: (list: { name: string; phone: string; planName: string }[]) =>
     `📋 *Resumo NetFácil* — planos que vencem amanhã (${list.length}):\n` +
@@ -245,4 +246,3 @@ export const messageTemplates = {
     `• *Nº Transação:* ${transId}\n` +
     `• *Expira em:* ${expiresAt}`,
 };
-
