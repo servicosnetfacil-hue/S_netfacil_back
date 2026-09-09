@@ -9,6 +9,7 @@ async function main() {
 
   await client.connect();
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'account_created'");
+  await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'account_activated_client'");
   console.log("ENUM notification_type actualizado com sucesso!");
   await client.end();
 }

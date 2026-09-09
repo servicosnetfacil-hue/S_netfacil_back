@@ -66,6 +66,7 @@ export async function sendAndLogNotification(params: {
   channel: "client" | "admin";
   type:
     | "account_created"
+    | "account_activated_client"
     | "reminder_7d"
     | "reminder_3d"
     | "reminder_1d"
@@ -161,6 +162,10 @@ export const messageTemplates = {
     `🌐 *Aceda ao Portal do Cliente aqui:*\n${portalUrl}\n\n` +
     `Guarde estes dados em segurança. Se precisar de ajuda, entre em contacto connosco!`,
 
+  accountActivatedClient: (name: string, portalUrl: string) =>
+    `Olá ${name}! ✅ A sua conta na *NetFácil* foi activada com sucesso.\n\n` +
+    `Agora já pode aceder ao Portal do Cliente e continuar a utilizar os nossos serviços.\n\n` +
+    `🌐 *Portal do Cliente:*\n${portalUrl}`,
 
   reminder7d: (name: string, planName: string, expiresAt: string) =>
     `Olá ${name}! 👋 O seu plano *${planName}* na NetFácil vence em 7 dias (${expiresAt}).\n\n` +

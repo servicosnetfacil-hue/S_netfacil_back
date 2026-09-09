@@ -48,6 +48,7 @@ async function main() {
     CREATE INDEX IF NOT EXISTS idx_payments_transaction_id ON payments(transaction_id);
   `);
 
+  await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'account_activated_client'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_approved_client'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_approved_admin'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_rejected_client'");

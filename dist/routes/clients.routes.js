@@ -190,19 +190,44 @@ router.put("/:id", auth_1.authenticate, auth_1.requireAdmin, async (req, res) =>
 // PATCH /clients/:id/toggle-active — ativar/desativar (bloquear)
 router.patch("/:id/toggle-active", auth_1.authenticate, auth_1.requireAdmin, async (req, res) => {
     const { id } = req.params;
-    const [updated] = await (0, db_1.query)(`UPDATE users SET is_active = NOT is_active WHERE id = $1 AND role = 'client'
-     RETURNING id, is_active`, [id]);
-    if (!updated)
+    const [current] = await (0, db_1.query)(`SELECT id, full_name, phone, is_active FROM users WHERE id = $1 AND role = 'client'`, [id]);
+    if (!current)
         return res.status(404).json({ error: "Cliente não encontrado." });
+    const [updated] = await (0, db_1.query)(`UPDATE users SET is_active = NOT is_active WHERE id = $1 AND role = 'client'
+     RETURNING id, full_name, phone, is_active`, [id]);
+    if (current.is_active === false && updated.is_active === true) {
+        const portalUrl = (0, whatsapp_service_1.getClientPortalUrl)();
+        const message = whatsapp_service_1.messageTemplates.accountActivatedClient(updated.full_name, portalUrl);
+        await (0, whatsapp_service_1.sendAndLogNotification)({
+            userId: updated.id,
+            subscriptionId: null,
+            channel: "client",
+            type: "account_activated_client",
+            phone: updated.phone,
+            message,
+        }).catch((err) => console.error("[WhatsApp] Erro ao enviar confirmação de activação ao cliente:", err));
+    }
     return res.json(updated);
 });
 // PATCH /clients/:id/reactivate — reactivar conta e limpar contador de comprovativos inválidos
 router.patch("/:id/reactivate", auth_1.authenticate, auth_1.requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const [current] = await (0, db_1.query)(`SELECT id, full_name, phone FROM users WHERE id = $1 AND role = 'client'`, [id]);
+    if (!current)
+        return res.status(404).json({ error: "Cliente não encontrado." });
     const [updated] = await (0, db_1.query)(`UPDATE users SET is_active = true, rejected_proof_attempts = 0
      WHERE id = $1 AND role = 'client'
-     RETURNING id, is_active, rejected_proof_attempts`, [req.params.id]);
-    if (!updated)
-        return res.status(404).json({ error: "Cliente não encontrado." });
+     RETURNING id, full_name, phone, is_active, rejected_proof_attempts`, [id]);
+    const portalUrl = (0, whatsapp_service_1.getClientPortalUrl)();
+    const message = whatsapp_service_1.messageTemplates.accountActivatedClient(updated.full_name, portalUrl);
+    await (0, whatsapp_service_1.sendAndLogNotification)({
+        userId: updated.id,
+        subscriptionId: null,
+        channel: "client",
+        type: "account_activated_client",
+        phone: updated.phone,
+        message,
+    }).catch((err) => console.error("[WhatsApp] Erro ao enviar confirmação de reactivação ao cliente:", err));
     return res.json(updated);
 });
 // DELETE /clients/:id — apagar cliente

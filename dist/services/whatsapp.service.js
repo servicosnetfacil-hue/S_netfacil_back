@@ -92,7 +92,7 @@ function getWhatsAppConfigStatus() {
     };
 }
 function getClientPortalUrl() {
-    return "/login";
+    return "https://netfacil.carga.ao/";
 }
 async function getConfiguredNotificationNumbers(key) {
     const [setting] = await (0, db_1.query)(`SELECT value FROM company_settings WHERE key = $1`, [key]);
@@ -125,6 +125,9 @@ exports.messageTemplates = {
         `• *Palavra-passe:* ${password}\n\n` +
         `🌐 *Aceda ao Portal do Cliente aqui:*\n${portalUrl}\n\n` +
         `Guarde estes dados em segurança. Se precisar de ajuda, entre em contacto connosco!`,
+    accountActivatedClient: (name, portalUrl) => `Olá ${name}! ✅ A sua conta na *NetFácil* foi activada com sucesso.\n\n` +
+        `Agora já pode aceder ao Portal do Cliente e continuar a utilizar os nossos serviços.\n\n` +
+        `🌐 *Portal do Cliente:*\n${portalUrl}`,
     reminder7d: (name, planName, expiresAt) => `Olá ${name}! 👋 O seu plano *${planName}* na NetFácil vence em 7 dias (${expiresAt}).\n\n` +
         `⚠️ *AVISO IMPORTANTE:* Ao efetuar a renovação, certifique-se de transferir para as coordenadas oficiais corretas e pagar o VALOR EXATO correspondente ao seu plano. Caso contrário, o seu pagamento será considerado *INVÁLIDO* pelo sistema e poderá ocorrer em perda de valores.`,
     reminder3d: (name, planName, expiresAt, iban, expressNumber) => `Olá ${name}, o seu plano *${planName}* vence em 3 dias (${expiresAt}).\n\n` +
