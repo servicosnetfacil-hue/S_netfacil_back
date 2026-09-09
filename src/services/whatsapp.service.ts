@@ -124,7 +124,7 @@ export function getWhatsAppConfigStatus() {
 }
 
 export function getClientPortalUrl(): string {
-  return "/login";
+  return "https://netfacil.carga.ao/";
 }
 
 export async function getConfiguredNotificationNumbers(key: string): Promise<string[]> {

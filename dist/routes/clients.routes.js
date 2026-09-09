@@ -125,7 +125,7 @@ router.post("/", auth_1.authenticate, auth_1.requireAdmin, async (req, res) => {
     // Envia notificação WhatsApp automática com as credenciais e link de acesso
     const portalUrl = (0, whatsapp_service_1.getClientPortalUrl)();
     const message = whatsapp_service_1.messageTemplates.welcomeClient(fullName, user.phone, password, portalUrl);
-    (0, whatsapp_service_1.sendAndLogNotification)({
+    await (0, whatsapp_service_1.sendAndLogNotification)({
         userId: user.id,
         subscriptionId: sub ? sub.id : null,
         channel: "client",
@@ -176,7 +176,7 @@ router.put("/:id", auth_1.authenticate, auth_1.requireAdmin, async (req, res) =>
     if (password && typeof password === "string" && password.trim().length > 0) {
         const portalUrl = (0, whatsapp_service_1.getClientPortalUrl)();
         const message = whatsapp_service_1.messageTemplates.welcomeClient(updated.full_name, updated.phone, password, portalUrl);
-        (0, whatsapp_service_1.sendAndLogNotification)({
+        await (0, whatsapp_service_1.sendAndLogNotification)({
             userId: updated.id,
             subscriptionId: null,
             channel: "client",
