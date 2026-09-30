@@ -86,6 +86,7 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
     entity: extractedEntity,
     reference: extractedReference,
     extractedTextLength: extracted.rawText.length,
+    extractionError: extracted.extractionError,
   });
 
   const configuredAdminNumbers = (companySettings.internet_activation_numbers ?? "")
@@ -111,7 +112,8 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
     extractedAmount,
     extractedTransId,
     extractedEntity,
-    extractedReference
+    extractedReference,
+    Boolean(extracted.extractionError)
   );
 
   await Promise.all(adminNumbers.map((number) =>

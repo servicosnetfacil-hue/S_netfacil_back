@@ -156,4 +156,12 @@ exports.messageTemplates = {
         `• *Montante:* ${amount} AOA\n` +
         `• *Nº Transação:* ${transId}\n` +
         `• *Expira em:* ${expiresAt}`,
+    paymentProofExtractedAdmin: (name, phone, fileName, amount, transId, entity, reference, extractionFailed) => `📄 *Comprovativo recebido para análise*\n\n` +
+        `• *Cliente:* ${name} (${formatPhoneDisplay(phone)})\n` +
+        `• *Ficheiro:* ${fileName}\n` +
+        `• *Leitura do PDF:* ${extractionFailed ? "Falhou; verificar o ficheiro e o log do servidor" : "Concluída"}\n` +
+        `• *Montante extraído:* ${amount === null ? "N/A" : `${amount.toLocaleString("pt-AO")} AOA`}\n` +
+        `• *Nº Transação:* ${transId ?? "N/A"}\n` +
+        `• *Entidade:* ${entity ?? "N/A"}\n` +
+        `• *Referência:* ${reference ?? "N/A"}`,
 };

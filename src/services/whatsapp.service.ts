@@ -224,11 +224,13 @@ export const messageTemplates = {
     amount: number | null,
     transId: string | null,
     entity: string | null,
-    reference: string | null
+    reference: string | null,
+    extractionFailed: boolean
   ) =>
     `📄 *Comprovativo recebido para análise*\n\n` +
     `• *Cliente:* ${name} (${formatPhoneDisplay(phone)})\n` +
     `• *Ficheiro:* ${fileName}\n` +
+    `• *Leitura do PDF:* ${extractionFailed ? "Falhou; verificar o ficheiro e o log do servidor" : "Concluída"}\n` +
     `• *Montante extraído:* ${amount === null ? "N/A" : `${amount.toLocaleString("pt-AO")} AOA`}\n` +
     `• *Nº Transação:* ${transId ?? "N/A"}\n` +
     `• *Entidade:* ${entity ?? "N/A"}\n` +
