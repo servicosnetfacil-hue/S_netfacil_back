@@ -51,6 +51,7 @@ async function main() {
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'account_activated_client'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_approved_client'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_approved_admin'");
+  await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_proof_extracted_admin'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'payment_rejected_client'");
   await client.query("ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'account_suspended_client'");
 

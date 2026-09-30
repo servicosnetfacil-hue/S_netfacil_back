@@ -78,6 +78,53 @@ router.post("/", authenticate, upload.single("proof"), async (req: Authenticated
   extractedEntity = extracted.entity;
   extractedReference = extracted.reference;
 
+  console.info("[Payments] Dados extraídos do comprovativo PDF:", {
+    userId: user.id,
+    fileName: req.file.originalname,
+    amount: extractedAmount,
+    transactionId: extractedTransId,
+    entity: extractedEntity,
+    reference: extractedReference,
+    extractedTextLength: extracted.rawText.length,
+  });
+
+  const configuredAdminNumbers = (companySettings.internet_activation_numbers ?? "")
+    .split(/[;,\n]+/)
+    .map((number) => number.trim())
+    .filter(Boolean);
+  const adminNumbers = Array.from(new Set(
+    [...configuredAdminNumbers, getAdminPhone()]
+      .filter((number) => Boolean(number?.trim()))
+      .map((number) => {
+        const digits = number.replace(/\D/g, "");
+        return digits.length === 9 ? `244${digits}` : digits;
+      })
+      .filter(Boolean)
+  ));
+  if (adminNumbers.length === 0) {
+    console.warn("[Payments] Sem números de administrador configurados para receber os dados do comprovativo.");
+  }
+  const extractionMessage = messageTemplates.paymentProofExtractedAdmin(
+    user.full_name,
+    user.phone,
+    req.file.originalname,
+    extractedAmount,
+    extractedTransId,
+    extractedEntity,
+    extractedReference
+  );
+
+  await Promise.all(adminNumbers.map((number) =>
+    sendAndLogNotification({
+      userId: user.id,
+      subscriptionId: subscription?.id ?? null,
+      channel: "admin",
+      type: "payment_proof_extracted_admin",
+      phone: number,
+      message: extractionMessage,
+    }).catch((error) => console.error("[WhatsApp] Erro ao notificar extração do comprovativo:", error))
+  ));
+
   if (extractedEntity || extractedReference || extractedTransId || extractedAmount) {
     const configuredEntity = companySettings.payment_entity?.trim();
     const configuredRef = companySettings.payment_reference?.trim();

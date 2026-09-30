@@ -75,6 +75,7 @@ export async function sendAndLogNotification(params: {
     | "admin_summary_0d"
     | "payment_approved_client"
     | "payment_approved_admin"
+    | "payment_proof_extracted_admin"
     | "payment_rejected_client"
     | "account_suspended_client";
   phone: string;
@@ -215,5 +216,22 @@ export const messageTemplates = {
     `• *Montante:* ${amount} AOA\n` +
     `• *Nº Transação:* ${transId}\n` +
     `• *Expira em:* ${expiresAt}`,
+
+  paymentProofExtractedAdmin: (
+    name: string,
+    phone: string,
+    fileName: string,
+    amount: number | null,
+    transId: string | null,
+    entity: string | null,
+    reference: string | null
+  ) =>
+    `📄 *Comprovativo recebido para análise*\n\n` +
+    `• *Cliente:* ${name} (${formatPhoneDisplay(phone)})\n` +
+    `• *Ficheiro:* ${fileName}\n` +
+    `• *Montante extraído:* ${amount === null ? "N/A" : `${amount.toLocaleString("pt-AO")} AOA`}\n` +
+    `• *Nº Transação:* ${transId ?? "N/A"}\n` +
+    `• *Entidade:* ${entity ?? "N/A"}\n` +
+    `• *Referência:* ${reference ?? "N/A"}`,
 };
 
